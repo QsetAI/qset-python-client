@@ -6,7 +6,8 @@ import math
 
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from qset import utils
+from utils_ak import *
+from .utils import *
 
 
 class ClientV0:
@@ -25,7 +26,7 @@ class ClientV0:
         return f'{self.api_url}{path}'
 
     @retry(stop=stop_after_attempt(10), wait=wait_exponential(multiplier=5., exp_base=1.5))
-    def _call(self, api_path, params=None, decoder=utils.cast_dict_or_list):
+    def _call(self, api_path, params=None, decoder=cast_dict_or_list):
         req = requests.get(self._url(api_path), headers={"x-api-key": self.api_key}, params=params)
         return decoder(req.content)
 
@@ -48,10 +49,10 @@ class ClientV0:
     def get_asset_dataset(self, dataset, ticker, start, end, columns=None):
         params = {'dataset': dataset, 'ticker': ticker, 'start': start, 'end': end}
         if columns:
-            params['columns'] = utils.cast_js(columns)
-        params['format'] = 'msgpack' # for speed and easier type conversion
-        return self._call('/asset_dataset', params=params, decoder=utils.MsgPackSerializer.decode)
-
+            params['columns'] = cast_js(columns)
+        params['format'] = 'msgpack'  # for speed and easier type conversion
+        return self._call('/asset_dataset', params=params, decoder=MsgPackSerializer.decode)
+    
     def _iter_data(self, dataset, query=None):
         dataset_overview = self.get_dataset_overview(dataset)
 
@@ -59,10 +60,10 @@ class ClientV0:
             raise Exception('Client supports only asset datasets at the moment')
 
         query = query or {}
-        query = utils.cast_dict_or_list(query)
+        query = cast_dict_or_list(query)
 
-        start = utils.cast_datetime(query['start'])
-        end = utils.cast_datetime(query['end'])
+        start = cast_datetime(query['start'])
+        end = cast_datetime(query['end'])
         ticker = query['ticker']
         columns = query.get('columns')
 
@@ -74,18 +75,18 @@ class ClientV0:
 
         asset_range = self.get_asset_dataset_range(dataset, ticker)
 
-        start = max(utils.cast_datetime(asset_range['minStartRange']), start)
-        end = min(utils.cast_datetime(asset_range['maxStartRange']), end)
+        start = max(cast_datetime(asset_range['minStartRange']), start)
+        end = min(cast_datetime(asset_range['maxStartRange']), end)
 
         if dataset_overview['max_request_range'] == '31d':
-            total = len(list(utils.iter_range_by_months(start, end)))
-            range_iterator = utils.iter_range_by_months(start, end)
+            total = len(list(iter_range_by_months(start, end)))
+            range_iterator = iter_range_by_months(start, end)
         else:
-            total = len(list(utils.iter_range(start, end, utils.cast_timedelta(dataset_overview['max_request_range']))))
-            range_iterator = utils.iter_range(start, end, utils.cast_timedelta(dataset_overview['max_request_range']))
+            total = len(list(iter_range(start, end, cast_timedelta(dataset_overview['max_request_range']))))
+            range_iterator = iter_range(start, end, cast_timedelta(dataset_overview['max_request_range']))
 
         if self.verbose:
-            range_iterator = utils.tqdm(range_iterator, total=total, desc=dataset)
+            range_iterator = tqdm(range_iterator, total=total, desc=dataset)
 
         for cur_start, cur_end in range_iterator:
             logging.info(f'Iterating over {cur_start} {cur_end}')
@@ -124,7 +125,7 @@ class ClientV0:
         if os.path.exists(fn):
             raise Exception(f'File {fn} already exists')
 
-        writer = utils.PandasWriter(fn)
+        writer = PandasCSVWriter(fn)
 
         def _save_handler(type, data):
             if type == 'columns':

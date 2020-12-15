@@ -1,7 +1,7 @@
 import datetime
 import msgpack
 import decimal
-from qset.utils.serialization.binary import pack_datetime, pack_decimal, pack_time, unpack_datetime, unpack_decimal, unpack_time, pack_date, unpack_date
+from utils_ak.serialization.binary import pack_datetime, pack_decimal, pack_time, unpack_datetime, unpack_decimal, unpack_time, pack_date, unpack_date
 
 EXT_DATE = 1
 EXT_DATETIME = 2
