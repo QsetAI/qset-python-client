@@ -18,7 +18,9 @@ from utils_ak.tqdm import tqdm
 
 
 class ClientV0:
-    def __init__(self, api_key=None, api_url="http://api.qset.ai/v0", verbose=True):
+    def __init__(
+        self, api_key=None, api_url="http://api.qset.ai:8000/v0", verbose=True
+    ):
         self.api_key = api_key or os.environ.get(
             "QSET_API_KEY"
         )  # todo: warn if not found
