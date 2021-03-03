@@ -36,6 +36,7 @@ class ClientV0:
     def _call(self, api_path, params=None, decoder=cast_dict_or_list):
         if not self.api_key:
             raise Exception("API key not set")
+
         req = requests.get(
             self._url(api_path), headers={"x-api-key": self.api_key}, params=params
         )
