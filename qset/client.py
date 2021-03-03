@@ -61,9 +61,13 @@ class ClientV0:
         )
 
     def get_asset_dataset(self, dataset, start, end, tickers=None, columns=None):
-        params = {"dataset": dataset, "tickers": tickers, "start": start, "end": end}
-        if columns:
-            params["columns"] = cast_js(columns)
+        params = {
+            "dataset": dataset,
+            "tickers": tickers,
+            "start": start,
+            "end": end,
+            "columns": columns,
+        }
         params["format"] = "msgpack"  # for speed and easier type conversion
         return self._call("/asset_dataset", params=params, decoder=self.coder.decode)
 
