@@ -44,7 +44,7 @@ class ClientV0:
         try:
             return decoder(req.content)
         except:
-            logger.exception("Failed to decode message", message=req.content)
+            self._log("Failed to decode message", "EXCEPTION", message=req.content)
             raise
 
     @retry(
