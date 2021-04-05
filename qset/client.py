@@ -1,17 +1,21 @@
-import logging
 import requests
 import pandas as pd
 import os
 import math
 
 from tenacity import retry, stop_after_attempt, wait_exponential
+from loguru import logger
 
 from .utils import *
 
 
 class ClientV0:
     def __init__(
-        self, api_key=None, api_url="http://api.qset.ai:8000/v0", verbose=True
+        self,
+        api_key=None,
+        api_url="http://api.qset.ai:8000/v0",
+        verbose=False,
+        show_progress_bar=True,
     ):
         self.api_key = api_key or os.environ.get(
             "QSET_API_KEY"
@@ -19,28 +23,39 @@ class ClientV0:
         self.api_url = api_url
 
         self.verbose = verbose
+        self.show_progress_bar = show_progress_bar
         self.progress_bar = None
 
         self.coder = MsgPackCoder()
 
-    def _log(self, msg, level=logging.INFO):
+    def _log(self, msg, level="DEBUG", **kwargs):
         if self.verbose:
-            logging.log(level, msg)
+            logger.log(level, msg, **kwargs)
 
     def _url(self, path):
         return f"{self.api_url}{path}"
 
-    @retry(
-        stop=stop_after_attempt(10), wait=wait_exponential(multiplier=5.0, exp_base=1.5)
-    )
     def _call(self, api_path, params=None, decoder=cast_dict_or_list):
         if not self.api_key:
             raise Exception("API key not set")
 
+        req = self._raw_call(api_path, params)
+
+        try:
+            return decoder(req.content)
+        except:
+            logger.exception("Failed to decode message", message=req.content)
+            raise
+
+    @retry(
+        stop=stop_after_attempt(10), wait=wait_exponential(multiplier=5.0, exp_base=1.5)
+    )
+    def _raw_call(self, api_path, params=None):
+        self._log("API Call", api_path=api_path, params=params)
         req = requests.get(
             self._url(api_path), headers={"x-api-key": self.api_key}, params=params
         )
-        return decoder(req.content)
+        return req
 
     def get_available_datasets(self, format="dataframe"):
         res = self._call("/available_datasets")
@@ -113,11 +128,11 @@ class ClientV0:
                 start, end, cast_timedelta(dataset_overview["max_request_range"])
             )
 
-        if self.verbose:
+        if self.show_progress_bar:
             range_iterator = tqdm(range_iterator, total=total, desc=dataset)
 
         for cur_start, cur_end in range_iterator:
-            logging.info(f"Iterating over {cur_start} {cur_end}")
+            self._log(f"Iterating over {cur_start} {cur_end}")
             chunk = self.get_asset_dataset(
                 dataset, cur_start, cur_end, tickers=tickers, columns=columns
             )
