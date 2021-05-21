@@ -2,7 +2,8 @@ from qset import Client
 
 
 def test(api_key):
-    cli = Client(api_key=api_key, api_url="http://localhost:8000/v0")
+    # cli = Client(api_key=api_key, api_url="http://localhost:8000/v0")
+    cli = Client(api_key=api_key)
     print(cli.get_dataset_overview("binance_timebars_1800"))
     print(
         cli.get_asset_dataset_range("binance_timebars_1800"),

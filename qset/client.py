@@ -7,6 +7,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from loguru import logger
 
 from .utils import *
+from utils_ak.loguru import *
 
 
 class ClientV0:
@@ -44,14 +45,14 @@ class ClientV0:
         try:
             return decoder(req.content)
         except:
-            self._log("Failed to decode message", "EXCEPTION", message=req.content)
+            self._log("Failed to decode message", "ERROR", message=req.content)
             raise
 
     @retry(
         stop=stop_after_attempt(10), wait=wait_exponential(multiplier=5.0, exp_base=1.5)
     )
     def _raw_call(self, api_path, params=None):
-        self._log("API Call", api_path=api_path, params=params)
+        self._log("API Call", api_path=api_path, api_key=self.api_key, params=params)
         req = requests.get(
             self._url(api_path), headers={"x-api-key": self.api_key}, params=params
         )
