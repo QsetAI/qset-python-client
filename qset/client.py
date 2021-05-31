@@ -112,6 +112,9 @@ class ClientV0:
         start = max(cast_datetime(asset_range["minStartRange"]), start)
         end = min(cast_datetime(asset_range["maxStartRange"]), end)
 
+        if start >= end:
+            return
+
         if dataset_overview["max_request_range"] == "31d":
             total = len(list(iter_range_by_months(start, end)))
             range_iterator = iter_range_by_months(start, end)
